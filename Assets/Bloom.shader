@@ -12,7 +12,6 @@
 
         CGINCLUDE
 
-
         #include "UnityCG.cginc"
         sampler2D _MainTex;
         float4 _MainTex_TexelSize;
@@ -45,6 +44,7 @@
         // 0: ダウンサンプリングと抽出パス
         Pass
         {
+			Blend One Zero
             CGPROGRAM
 
             #pragma vertex vert
@@ -67,6 +67,7 @@
             ENDCG
         }
 
+		// 1: ダウンサンプリング
         Pass
         {
             CGPROGRAM
@@ -88,9 +89,10 @@
             ENDCG
         }
 
-        // 1: Blur
+        // 2: アップサンプリング
         Pass
         {
+			Blend SrcAlpha OneMinusSrcAlpha
             CGPROGRAM
 
             #pragma vertex vert
@@ -98,29 +100,41 @@
 
             fixed4 frag(v2f i) : SV_Target
             {
-                half2 s = i.uv;
-                s -= _Offset * 5.0;
-                fixed4 col = tex2D(_MainTex, s);
-                s += _Offset;
-                col += tex2D(_MainTex, s);
-                s += _Offset;
-                col += tex2D(_MainTex, s) * 2.0;
-                s += _Offset;
-                col += tex2D(_MainTex, s) * 2.0;
-                s += _Offset;
-                col += tex2D(_MainTex, s) * 3.0;
-                s += _Offset;
-                col += tex2D(_MainTex, s);
-                s += _Offset;
-                col += tex2D(_MainTex, s);
+    //            half2 s = i.uv;
+    //            s -= _Offset * 5.0;
+    //            fixed4 col = tex2D(_MainTex, s);
+    //            s += _Offset;
+    //            col += tex2D(_MainTex, s);
+    //            s += _Offset;
+    //            col += tex2D(_MainTex, s) * 2.0;
+    //            s += _Offset;
+    //            col += tex2D(_MainTex, s) * 2.0;
+    //            s += _Offset;
+				//col += tex2D(_MainTex, s) * 3.0;
+				//s += _Offset;
+				//col += tex2D(_MainTex, s) * 2.0;
+				//s += _Offset;
+				//col += tex2D(_MainTex, s) * 2.0;
+				//s += _Offset;
+				//col += tex2D(_MainTex, s);
+				//s += _Offset;
+				//col += tex2D(_MainTex, s);
 
-                return col / 21.0;
+    //            return col / 21.0;
+				half2 o = _MainTex_TexelSize.xy * 0.5;
+				fixed4 col = tex2D(_MainTex, i.uv + o);
+				col += tex2D(_MainTex, i.uv + half2(o.x, -o.y));
+				col += tex2D(_MainTex, i.uv + half2(-o.x, o.y));
+				col += tex2D(_MainTex, i.uv + -o);
+				col *= 0.25;
+				col.a = 1;
+				return col;
             }
 
             ENDCG
         }
 
-        // 合成
+        // 3: 合成
         Pass
         {
             CGPROGRAM
